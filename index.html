@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>猜数字小游戏</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --ink: #172033;
+      --muted: #647084;
+      --line: #dfe6ee;
+      --panel: rgba(255, 255, 255, 0.92);
+      --blue: #2563eb;
+      --blue-soft: #e8f0ff;
+      --red: #dc2626;
+      --red-soft: #fff0f0;
+      --green: #16a34a;
+      --green-soft: #eaf8ef;
+      --amber: #b45309;
+      --amber-soft: #fff7e8;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, "Microsoft YaHei", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 18% 12%, rgba(37, 99, 235, 0.12), transparent 30%),
+        radial-gradient(circle at 82% 18%, rgba(22, 163, 74, 0.10), transparent 28%),
+        linear-gradient(180deg, #f8fbff 0%, #ffffff 62%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 20px;
+    }
+
+    main {
+      width: 100%;
+      max-width: 640px;
+      overflow: hidden;
+      border: 1px solid rgba(203, 213, 225, 0.9);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 22px 60px rgba(31, 41, 55, 0.12);
+    }
+
+    .hero {
+      padding: 34px 36px 26px;
+      color: #fff;
+      background:
+        linear-gradient(135deg, rgba(30, 64, 175, 0.94), rgba(14, 116, 144, 0.92)),
+        #1e40af;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 30px;
+      padding: 0 12px;
+      border: 1px solid rgba(255, 255, 255, 0.32);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.14);
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .badge-mark {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #86efac;
+      box-shadow: 0 0 0 5px rgba(134, 239, 172, 0.16);
+    }
+
+    h1 {
+      margin: 18px 0 10px;
+      font-size: 36px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .rules {
+      max-width: 520px;
+      margin: 0;
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 16px;
+      line-height: 1.8;
+    }
+
+    .game {
+      padding: 28px 36px 34px;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    input {
+      width: 100%;
+      min-width: 0;
+      height: 52px;
+      padding: 0 16px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      color: var(--ink);
+      background: #fff;
+      font-size: 18px;
+      outline: none;
+      transition: border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    input:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+    }
+
+    button {
+      height: 52px;
+      padding: 0 24px;
+      border: 0;
+      border-radius: 8px;
+      color: #fff;
+      background: var(--blue);
+      font-size: 17px;
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: transform 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    button:hover:not(:disabled) {
+      background: #1d4ed8;
+      box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2);
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
+
+    .status-panel {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: center;
+      min-height: 78px;
+      margin: 8px 0 16px;
+      padding: 16px 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f8fafc;
+    }
+
+    .message {
+      margin: 0;
+      color: var(--muted);
+      font-size: 19px;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+
+    .message.error {
+      color: var(--amber);
+    }
+
+    .message.high {
+      color: var(--red);
+    }
+
+    .message.low {
+      color: var(--blue);
+    }
+
+    .message.success {
+      color: var(--green);
+    }
+
+    .stats {
+      display: grid;
+      place-items: center;
+      min-width: 82px;
+      min-height: 58px;
+      margin: 0;
+      border: 1px solid #d8e1ec;
+      border-radius: 8px;
+      background: #fff;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.2;
+    }
+
+    .stats span {
+      display: block;
+      margin-top: 4px;
+      color: var(--ink);
+      font-size: 24px;
+      font-weight: 800;
+    }
+
+    .restart {
+      display: none;
+      width: 100%;
+      margin: 4px 0 18px;
+      background: var(--green);
+    }
+
+    .restart:hover {
+      background: #15803d;
+      box-shadow: 0 10px 20px rgba(22, 163, 74, 0.18);
+    }
+
+    .history {
+      margin-top: 22px;
+      padding-top: 22px;
+      border-top: 1px solid var(--line);
+    }
+
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .history h2 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.4;
+    }
+
+    .range-chip {
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: var(--blue-soft);
+      color: #1d4ed8;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .history-list {
+      display: grid;
+      gap: 8px;
+      min-height: 38px;
+      max-height: 230px;
+      margin: 0;
+      padding: 0;
+      overflow: auto;
+      color: #455166;
+      font-size: 15px;
+      line-height: 1.5;
+      list-style: none;
+    }
+
+    .history-list li {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border: 1px solid #edf1f6;
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .history-list li.high {
+      background: var(--red-soft);
+      color: var(--red);
+    }
+
+    .history-list li.low {
+      background: var(--blue-soft);
+      color: #1d4ed8;
+    }
+
+    .history-list li.success {
+      background: var(--green-soft);
+      color: var(--green);
+      font-weight: 800;
+    }
+
+    .empty {
+      color: #94a3b8;
+    }
+
+    @media (max-width: 560px) {
+      body {
+        align-items: flex-start;
+        padding: 16px;
+      }
+
+      .hero,
+      .game {
+        padding-left: 20px;
+        padding-right: 20px;
+      }
+
+      h1 {
+        font-size: 30px;
+      }
+
+      .controls,
+      .status-panel {
+        grid-template-columns: 1fr;
+      }
+
+      button {
+        width: 100%;
+      }
+
+      .stats {
+        min-height: 50px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <div class="badge"><span class="badge-mark"></span>1-100 随机挑战</div>
+      <h1>猜数字小游戏</h1>
+      <p class="rules">系统已经藏好一个整数。输入你的猜测，根据提示逐步缩小范围，直到找出正确答案。</p>
+    </section>
+
+    <section class="game">
+      <div class="controls">
+        <input id="guessInput" type="text" inputmode="numeric" autocomplete="off" placeholder="输入 1-100 的整数">
+        <button id="submitButton" type="button">提交猜测</button>
+      </div>
+
+      <div class="status-panel">
+        <p id="message" class="message">开始猜吧，答案就在 1 到 100 之间。</p>
+        <p class="stats">已猜<span id="guessCount">0</span></p>
+      </div>
+
+      <button id="restartButton" class="restart" type="button">重新开始</button>
+
+      <section class="history" aria-label="历史猜测记录">
+        <div class="history-header">
+          <h2>历史猜测记录</h2>
+          <span class="range-chip">范围 1-100</span>
+        </div>
+        <ul id="historyList" class="history-list">
+          <li class="empty">暂无记录</li>
+        </ul>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const guessInput = document.getElementById("guessInput");
+    const submitButton = document.getElementById("submitButton");
+    const restartButton = document.getElementById("restartButton");
+    const message = document.getElementById("message");
+    const guessCount = document.getElementById("guessCount");
+    const historyList = document.getElementById("historyList");
+
+    let answer = createAnswer();
+    let count = 0;
+    let isGameOver = false;
+
+    function createAnswer() {
+      return Math.floor(Math.random() * 100) + 1;
+    }
+
+    function setMessage(text, type) {
+      message.textContent = text;
+      message.className = `message ${type || ""}`.trim();
+    }
+
+    function cleanInput() {
+      guessInput.value = guessInput.value.replace(/\D/g, "");
+    }
+
+    function validateGuess(value) {
+      if (value === "") {
+        return "请输入数字后再提交";
+      }
+
+      if (!/^\d+$/.test(value)) {
+        return "格式错误：只能输入 1-100 的整数";
+      }
+
+      const number = Number(value);
+      if (!Number.isInteger(number) || number < 1 || number > 100) {
+        return "格式错误：请输入 1-100 之间的整数";
+      }
+
+      return "";
+    }
+
+    function addHistory(number, result, type) {
+      const emptyItem = historyList.querySelector(".empty");
+      if (emptyItem) {
+        emptyItem.remove();
+      }
+
+      const item = document.createElement("li");
+      item.className = type;
+      item.innerHTML = `<span>第 ${count} 次：${number}</span><strong>${result}</strong>`;
+      historyList.prepend(item);
+    }
+
+    function submitGuess() {
+      if (isGameOver) {
+        return;
+      }
+
+      const value = guessInput.value.trim();
+      const error = validateGuess(value);
+      if (error) {
+        setMessage(error, "error");
+        return;
+      }
+
+      const number = Number(value);
+      count += 1;
+      guessCount.textContent = count;
+
+      if (number > answer) {
+        setMessage("猜大了，请猜小一点", "high");
+        addHistory(number, "偏大", "high");
+      } else if (number < answer) {
+        setMessage("猜小了，请猜大一点", "low");
+        addHistory(number, "偏小", "low");
+      } else {
+        setMessage(`恭喜猜对！答案就是 ${answer}`, "success");
+        addHistory(number, "猜对", "success");
+        isGameOver = true;
+        submitButton.disabled = true;
+        guessInput.disabled = true;
+        restartButton.style.display = "block";
+      }
+
+      guessInput.value = "";
+      guessInput.focus();
+    }
+
+    function restartGame() {
+      answer = createAnswer();
+      count = 0;
+      isGameOver = false;
+      guessCount.textContent = "0";
+      guessInput.value = "";
+      guessInput.disabled = false;
+      submitButton.disabled = false;
+      restartButton.style.display = "none";
+      historyList.innerHTML = '<li class="empty">暂无记录</li>';
+      setMessage("新一轮开始，继续猜吧。", "");
+      guessInput.focus();
+    }
+
+    guessInput.addEventListener("input", cleanInput);
+    submitButton.addEventListener("click", submitGuess);
+    restartButton.addEventListener("click", restartGame);
+    guessInput.addEventListener("keydown", function (event) {
+      if (event.key === "Enter") {
+        submitGuess();
+      }
+    });
+  </script>
+</body>
+</html>
